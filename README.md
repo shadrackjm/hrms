@@ -20,13 +20,11 @@ A comprehensive Human Resource Management System featuring role-based multi-pane
 
 ## **Technical Skills Used**
 
-* **Laravel 11**
-* **Filament PHP 3** (Admin Panel Framework)
-* **Spatie Laravel Permissions**
+* **Laravel 12**
+* **Filament PHP 4** (Admin Panel Framework)
 * **Filament Shield** (Role Management)
 * **Laravel Queue System**
 * **Laravel Task Scheduling**
-* **Spatie Laravel Settings**
 * **MySQL Database Design**
 * **Livewire 3**
 * **Alpine.js**
@@ -37,14 +35,11 @@ A comprehensive Human Resource Management System featuring role-based multi-pane
 ## **Deliverables**
 
 * Fully functional multi-tenant HR management platform
-* 15+ database migrations with complete relational structure
-* 12+ Filament resources with CRUD operations
+* database migrations with complete relational structure
+* Filament resources with CRUD operations
 * 3 separate authenticated panels with custom dashboards
 * Custom widgets for real-time statistics
 * Automated payroll generation system
 * Comprehensive role & permission management
-* Settings management interface
 * Production-ready codebase with queue integration
-* Database seeder with sample data
-* Complete documentation
  
