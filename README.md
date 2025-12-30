@@ -43,3 +43,4 @@ A comprehensive Human Resource Management System featuring role-based multi-pane
 * Comprehensive role & permission management
 * Production-ready codebase with queue integration
  
+passddb : CR96nKO514tydiK9
