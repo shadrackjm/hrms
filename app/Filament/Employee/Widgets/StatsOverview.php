@@ -14,38 +14,38 @@ class StatsOverview extends StatsOverviewWidget
     {
         $userId = auth()->user()->id;
         return [
-            Stat::make('My Leave Requests', 
+            Stat::make(__('My Leave Requests'), 
             LeaveRequest::where('user_id', $userId)->count()
         )
-            ->description('Total leave requests')
+            ->description(__('Total leave requests'))
             ->descriptionIcon('heroicon-o-calendar-days')
             ->color('info'),
 
-            Stat::make('Pending Leaves', 
+            Stat::make(__('Pending Leaves'), 
             LeaveRequest::where('user_id', $userId)->where('status', 'pending')->count()
         )
-            ->description('Awaiting approval')
+            ->description(__('Awaiting approval'))
             ->descriptionIcon('heroicon-o-clock')
             ->color('warning'),
 
-            Stat::make('This Month Attendance', 
+            Stat::make(__('This Month Attendance'), 
                 Attendance::where('user_id', $userId)
                     ->whereMonth('date', date('m'))
                     ->whereYear('date', date('Y'))
                     ->count()
             )
-                ->description('Days recorded')
+                ->description(__('Days recorded'))
                 ->descriptionIcon('heroicon-o-calendar')
                 ->color('primary'),
 
-                Stat::make('Last Payroll', 
+                Stat::make(__('Last Payroll'), 
                 Payroll::where('user_id', $userId)
                     ->where('status', 'paid')
                     ->latest()
                     ->first()
                     ?->net_salary ?? 0
             )
-                ->description('Last payment')
+                ->description(__('Last payment'))
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color('success'),
         ];

@@ -21,24 +21,32 @@ class LeaveRequestsTable
         return $table
             ->columns([
                 TextColumn::make('user.name')
+                    ->label(__('Name'))
                     ->searchable(),
                 TextColumn::make('leaveType.name')
+                    ->label(__('Leave Type'))
                     ->searchable(),
                 TextColumn::make('start_date')
+                    ->label(__('Start Date'))
                     ->date()
                     ->sortable(),
                 TextColumn::make('end_date')
+                    ->label(__('End Date'))
                     ->date()
                     ->sortable(),
                 TextColumn::make('days')
+                    ->label(__('Days'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('status')
+                    ->label(__('Status'))
                     ->badge(),
                 TextColumn::make('approved_by')
+                    ->label(__('Approved By'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('approved_at')
+                    ->label(__('Approved At'))
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('created_at')

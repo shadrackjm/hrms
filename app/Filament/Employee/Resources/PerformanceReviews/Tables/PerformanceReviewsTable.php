@@ -20,27 +20,36 @@ class PerformanceReviewsTable
         })
             ->columns([
                 TextColumn::make('user.name')
+                    ->label(__('Name'))
                     ->searchable(),
                 TextColumn::make('reviewer.name')
+                    ->label(__('Reviewer'))
                     ->searchable(),
                 TextColumn::make('review_period')
+                    ->label(__('Review Period'))
                     ->searchable(),
                 TextColumn::make('quality_of_work')
+                    ->label(__('Quality of Work'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('productivity')
+                    ->label(__('Productivity'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('communication')
+                    ->label(__('Communication'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('teamwork')
+                    ->label(__('Teamwork'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('leadership')
+                    ->label(__('Leadership'))
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('overall_rating')
+                    ->label(__('Overall Rating'))
                     ->badge()
                     ->colors([
                         'danger' => fn($state) => $state < 5,

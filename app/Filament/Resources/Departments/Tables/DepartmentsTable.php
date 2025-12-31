@@ -16,14 +16,17 @@ class DepartmentsTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('Name'))
                     ->searchable(),
                 TextColumn::make('manager.name')
+                    ->label(__('Manager'))
                     ->searchable(),
                 TextColumn::make('employees_count')
                     ->counts('employees')
                     ->badge()
-                    ->label('Employees'),
-                ColorColumn::make('color'),
+                    ->label(__('Employees')),
+                ColorColumn::make('color')
+                    ->label(__('Color')),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

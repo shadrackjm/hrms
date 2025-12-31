@@ -19,6 +19,12 @@ class LeaveTypeResource extends Resource
     protected static ?string $model = LeaveType::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Calendar;
+ 
+    public static function getNavigationLabel(): string
+    {
+        return __('Leave Types');
+    }
+ 
     protected static string | UnitEnum | null $navigationGroup = 'Leave Management';
 
     public static function form(Schema $schema): Schema

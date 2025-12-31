@@ -17,26 +17,36 @@ use Deprecated;
 use Iterator;
 use League\Uri\Contracts\QueryInterface;
 use League\Uri\Contracts\UriComponentInterface;
+use League\Uri\Contracts\UriException;
 use League\Uri\Contracts\UriInterface;
+use League\Uri\Encoder;
 use League\Uri\Exceptions\SyntaxError;
 use League\Uri\KeyValuePair\Converter;
 use League\Uri\QueryString;
-use League\Uri\Uri;
+use League\Uri\UriString;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
 use Traversable;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
+use ValueError;
 
 use function array_column;
 use function array_count_values;
 use function array_filter;
 use function array_flip;
 use function array_intersect;
+use function array_is_list;
 use function array_map;
 use function array_merge;
 use function count;
+use function get_object_vars;
 use function http_build_query;
 use function implode;
+use function in_array;
 use function is_int;
+use function is_object;
+use function is_string;
 use function preg_match;
 use function preg_quote;
 use function preg_replace;
@@ -70,13 +80,32 @@ final class Query extends Component implements QueryInterface
     }
 
     /**
+     * Create a new instance from a string.or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string|null $uri = null): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (UriException) {
+            return null;
+        }
+    }
+
+    /**
      * Returns a new instance from the input of http_build_query.
      *
      * @param non-empty-string $separator
      */
-    public static function fromVariable(object|array $parameters, string $separator = '&'): self
+    public static function fromVariable(object|array $parameters, string $separator = '&', string $prefix = ''): self
     {
-        return new self(http_build_query(data: $parameters, arg_separator: $separator), Converter::fromRFC1738($separator));
+        $params = is_object($parameters) ? get_object_vars($parameters) : $parameters;
+
+        $data = [];
+        foreach ($params as $name => $value) {
+            $data[$prefix.$name] = $value;
+        }
+
+        return new self(http_build_query(data: $data, arg_separator: $separator), Converter::fromRFC1738($separator));
     }
 
     /**
@@ -85,23 +114,33 @@ final class Query extends Component implements QueryInterface
      * @param iterable<int, array{0:string, 1:string|null}> $pairs
      * @param non-empty-string $separator
      */
-    public static function fromPairs(iterable $pairs, string $separator = '&'): self
+    public static function fromPairs(iterable $pairs, string $separator = '&', string $prefix = ''): self
     {
+        $data = [];
+        foreach ($pairs as $pair) {
+            if (!is_array($pair) || !array_is_list($pair) || 2 !== count($pair)) {
+                throw new SyntaxError('A pair must be a sequential array starting at `0` and containing two elements.');
+            }
+
+            $data[] = [$prefix.$pair[0], $pair[1]];
+        }
+
         $converter = Converter::fromRFC3986($separator);
 
-        return new self(QueryString::buildFromPairs($pairs, $converter), $converter);
+        return new self(QueryString::buildFromPairs($data, $converter), $converter);
     }
 
     /**
      * Create a new instance from a URI object.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(WhatWgUrl|Rfc3986Uri|Stringable|string $uri): self
     {
         $uri = self::filterUri($uri);
 
         return match (true) {
-            $uri instanceof UriInterface => new self($uri->getQuery()),
-            default => new self(Uri::new($uri)->getQuery()),
+            $uri instanceof Rfc3986Uri => new self($uri->getRawQuery()),
+            $uri instanceof Psr7UriInterface => new self(UriString::parse($uri)['query']),
+            default => new self($uri->getQuery()),
         };
     }
 
@@ -155,6 +194,16 @@ final class Query extends Component implements QueryInterface
         return QueryString::buildFromPairs($this->pairs, Converter::fromFormData($this->separator));
     }
 
+    public function decoded(): ?string
+    {
+        return Converter::new($this->separator)->toValue($this);
+    }
+
+    public function normalize(): self
+    {
+        return self::new(Encoder::normalizeQuery($this->value()));
+    }
+
     public function value(): ?string
     {
         return $this->toRFC3986();
@@ -166,6 +215,11 @@ final class Query extends Component implements QueryInterface
             $this->pairs => '',
             default => '?'.$this->value(),
         };
+    }
+
+    public function isEmpty(): bool
+    {
+        return [] === $this->pairs;
     }
 
     public function jsonSerialize(): ?string
@@ -217,9 +271,37 @@ final class Query extends Component implements QueryInterface
         return null;
     }
 
+    public function first(string $key): ?string
+    {
+        return $this->get($key);
+    }
+
+    public function last(string $key): ?string
+    {
+        $res = $this->getAll($key);
+
+        return $res[count($res) - 1] ?? null;
+    }
+
     public function getAll(string $key): array
     {
         return array_column(array_filter($this->pairs, fn (array $pair): bool => $key === $pair[0]), 1);
+    }
+
+    public function equals(mixed $value): bool
+    {
+        if (!$value instanceof Stringable && !is_string($value) && null !== $value) {
+            return false;
+        }
+
+        if (!$value instanceof UriComponentInterface) {
+            $value = self::tryNew($value);
+            if (null === $value) {
+                return false;
+            }
+        }
+
+        return $value->getUriComponent() === $this->getUriComponent();
     }
 
     public function parameters(): array
@@ -241,6 +323,33 @@ final class Query extends Component implements QueryInterface
         }
 
         return [] !== $names;
+    }
+
+    public function mergeParameters(object|array $parameter, string $prefix = ''): self
+    {
+        $params = is_object($parameter) ? get_object_vars($parameter) : $parameter;
+        $data = [];
+        foreach ($params as $name => $value) {
+            $data[$prefix.$name] = $value;
+        }
+
+        return in_array($data, [$this->parameters, []], true) ? $this : new self(
+            http_build_query(data: array_merge($this->parameters, $data), arg_separator: $this->separator),
+            Converter::fromRFC1738($this->separator)
+        );
+    }
+
+    public function replaceParameter(string $name, mixed $parameter): self
+    {
+        $this->hasParameter($name) || throw new ValueError('The specified name does not exist');
+        if ($parameter === $this->parameters[$name]) {
+            return $this;
+        }
+
+        $parameters = $this->parameters;
+        $parameters[$name] = $parameter;
+
+        return new self(http_build_query(data: $parameters, arg_separator: $this->separator), Converter::fromRFC1738($this->separator));
     }
 
     public function withSeparator(string $separator): self
@@ -296,6 +405,23 @@ final class Query extends Component implements QueryInterface
         }
 
         return self::fromPairs($pairs, $this->separator);
+    }
+
+    /**
+     * @template TInitial
+     *
+     * @param callable(TInitial|null, array{0:array-key, 1:mixed}, array-key=): TInitial $callback
+     * @param TInitial|null $initial
+     *
+     * @return TInitial|null
+     */
+    public function reduce(callable $callback, mixed $initial = null): mixed
+    {
+        foreach ($this->pairs as $offset => $pair) {
+            $initial = $callback($initial, $pair, $offset);
+        }
+
+        return $initial;
     }
 
     /**
@@ -414,7 +540,7 @@ final class Query extends Component implements QueryInterface
     /**
      * Validate the given pair.
      *
-     * To be valid the pair must be the null value, a scalar or a collection of scalar and null values.
+     * To be valid, the pair must be the null value, a scalar or a collection of scalar and null values.
      */
     private function filterPair(Stringable|string|int|float|bool|null $value): ?string
     {
@@ -488,6 +614,68 @@ final class Query extends Component implements QueryInterface
             $pairs  => $this,
             default => self::fromPairs(array_filter($pairs, $this->filterEmptyValue(...)), $this->separator),
         };
+    }
+
+    public function prepend(Stringable|string|null $query): QueryInterface
+    {
+        return Query::new($query)->append($this);
+    }
+
+    /**
+     * Replace a pair based on its offset.
+     */
+    public function replace(int $offset, string $key, Stringable|string|int|float|bool|null $value): QueryInterface
+    {
+        $index = $offset < 0 ? count($this->pairs) + $offset : $offset;
+        $pair = $this->pairs[$index] ?? [];
+        [] !== $pair || throw new ValueError('The given offset "'.$offset.'" does not exist');
+
+        $newPair = [$key, $this->filterPair($value)];
+        if ($pair === $newPair) {
+            return $this;
+        }
+
+        $newPairs = $this->pairs;
+        $newPairs[$index] = $newPair;
+
+        return self::fromPairs($newPairs, $this->separator);
+    }
+
+    /**
+     * Returns the offset of the pair based on its key and its nth occurrence.
+     *
+     * negative occurrences are supported
+     */
+    public function indexOf(string $key, int $nth = 0): ?int
+    {
+        if ([] === $this->pairs) {
+            return null;
+        }
+
+        if ($nth < 0) {
+            $matchCount = 0;
+            for ($offset = count($this->pairs) - 1; $offset >= 0; --$offset) {
+                if ($this->pairs[$offset][0] === $key) {
+                    if (++$matchCount === -$nth) {
+                        return $offset;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        $matchCount = 0;
+        foreach ($this->pairs as $offset => $pair) {
+            if ($pair[0] === $key) {
+                if ($nth === $matchCount) {
+                    return $offset;
+                }
+                ++$matchCount;
+            }
+        }
+
+        return null;
     }
 
     /**

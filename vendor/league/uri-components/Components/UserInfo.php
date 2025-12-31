@@ -16,16 +16,19 @@ namespace League\Uri\Components;
 use Deprecated;
 use League\Uri\Contracts\AuthorityInterface;
 use League\Uri\Contracts\UriComponentInterface;
+use League\Uri\Contracts\UriException;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Contracts\UserInfoInterface;
 use League\Uri\Encoder;
-use League\Uri\Exceptions\SyntaxError;
-use League\Uri\Uri;
+use League\Uri\UriString;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use SensitiveParameter;
 use Stringable;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
 
 use function explode;
+use function is_string;
 
 final class UserInfo extends Component implements UserInfoInterface
 {
@@ -37,29 +40,29 @@ final class UserInfo extends Component implements UserInfoInterface
      */
     public function __construct(
         Stringable|string|null $username,
-        #[SensitiveParameter]
-        Stringable|string|null $password = null
+        #[SensitiveParameter] Stringable|string|null $password = null,
     ) {
         $this->username = $this->validateComponent($username);
-        $password = $this->validateComponent($password);
-        if (null === $this->username && null !== $password) {
-            throw new SyntaxError('It is not possible to associated a password to an undefined user.');
-        }
-
-        $this->password = $password;
+        $this->password = $this->validateComponent($password);
     }
 
     /**
      * Create a new instance from a URI object.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(Rfc3986Uri|WhatWgUrl|Stringable|string $uri): self
     {
         $uri = self::filterUri($uri);
+        if ($uri instanceof Rfc3986Uri) {
+            return new self($uri->getRawUsername(), $uri->getRawPassword());
+        }
 
-        return match (true) {
-            $uri instanceof UriInterface => new self($uri->getUsername(), $uri->getPassword()),
-            default => self::new(Uri::new($uri)->getUserInfo()),
-        };
+        if ($uri instanceof WhatWgUrl || $uri instanceof UriInterface) {
+            return new self($uri->getUsername(), $uri->getPassword());
+        }
+
+        $components = UriString::parse($uri);
+
+        return new self($components['user'], $components['pass']);
     }
 
     /**
@@ -111,12 +114,40 @@ final class UserInfo extends Component implements UserInfoInterface
         return new self(Encoder::decodeAll($user), Encoder::decodeAll($pass));
     }
 
+    /**
+     * Create a new instance from a string or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string|null $uri = null): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (UriException) {
+            return null;
+        }
+    }
+
     public function value(): ?string
     {
         return match (true) {
             null === $this->password => $this->getUsername(),
             default => $this->getUsername().':'.$this->getPassword(),
         };
+    }
+
+    public function equals(mixed $value): bool
+    {
+        if (!$value instanceof Stringable && !is_string($value) && null !== $value) {
+            return false;
+        }
+
+        if (!$value instanceof UriComponentInterface) {
+            $value = self::tryNew($value);
+            if (null === $value) {
+                return false;
+            }
+        }
+
+        return $value->getUriComponent() === $this->getUriComponent();
     }
 
     public function getUriComponent(): string
@@ -158,22 +189,21 @@ final class UserInfo extends Component implements UserInfoInterface
     public function withUser(Stringable|string|null $username): self
     {
         $username = $this->validateComponent($username);
+        if ($this->username === $username) {
+            return $this;
+        }
 
-        return match ($this->username) {
-            $username => $this,
-            default => new self($username, $this->password),
-        };
+        return new self($username, $this->password);
     }
 
     public function withPass(#[SensitiveParameter] Stringable|string|null $password): self
     {
         $password = $this->validateComponent($password);
+        if ($password === $this->password) {
+            return $this;
+        }
 
-        return match (true) {
-            $password === $this->password => $this,
-            null === $this->username => throw new SyntaxError('It is not possible to associated a password to an undefined user.'),
-            default => new self($this->username, $password),
-        };
+        return new self($this->username, $password);
     }
 
     /**
@@ -187,7 +217,7 @@ final class UserInfo extends Component implements UserInfoInterface
      * Create a new instance from a URI object.
      */
     #[Deprecated(message:'use League\Uri\Components\UserInfo::fromUri() instead', since:'league/uri-components:7.0.0')]
-    public static function createFromUri(Psr7UriInterface|UriInterface $uri): self
+    public static function createFromUri(Rfc3986Uri|WhatWgUrl|Psr7UriInterface|UriInterface $uri): self
     {
         return self::fromUri($uri);
     }

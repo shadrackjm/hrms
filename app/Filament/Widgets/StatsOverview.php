@@ -15,21 +15,21 @@ class StatsOverview extends StatsOverviewWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Total Employees', User::count())
-            ->description('Active employees in system')
+            Stat::make(__('Total Employees'), User::count())
+            ->description(__('Active employees in system'))
             ->descriptionIcon('heroicon-o-users')
             ->color('success'),
-            Stat::make('Departments', Department::count())
-                ->description('Total departments')
+            Stat::make(__('Departments'), Department::count())
+                ->description(__('Total departments'))
                 ->descriptionIcon('heroicon-o-building-office')
                 ->color('info'),
-                    Stat::make('Pending Leave Requests', LeaveRequest::where('status', 'pending')->count())
-                    ->description('Awaiting approval')
+                    Stat::make(__('Pending Leave Requests'), LeaveRequest::where('status', 'pending')->count())
+                    ->description(__('Awaiting approval'))
                     ->descriptionIcon('heroicon-o-calendar-days')
                     ->color('warning'),
             
-            Stat::make('Today\'s Attendance', Attendance::whereDate('date', today())->count())
-                ->description('Checked in today')
+            Stat::make(__('Today\'s Attendance'), Attendance::whereDate('date', today())->count())
+                ->description(__('Checked in today'))
                 ->descriptionIcon('heroicon-o-clock')
                 ->color('primary'),
         ];

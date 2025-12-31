@@ -15,22 +15,21 @@ namespace League\Uri\Components;
 
 use Deprecated;
 use League\Uri\Contracts\PathInterface;
+use League\Uri\Contracts\UriComponentInterface;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Encoder;
-use League\Uri\Uri;
+use League\Uri\UriString;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
+use Throwable;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
 
-use function array_pop;
-use function array_reduce;
-use function end;
-use function explode;
-use function implode;
+use function is_string;
 use function substr;
 
 final class Path extends Component implements PathInterface
 {
-    private const DOT_SEGMENTS = ['.' => 1, '..' => 1];
     private const SEPARATOR = '/';
 
     private readonly string $path;
@@ -60,13 +59,31 @@ final class Path extends Component implements PathInterface
     }
 
     /**
+     * Create a new instance from a string or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string $uri = ''): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
      * Create a new instance from a URI object.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(WhatwgUrl|Rfc3986Uri|Stringable|string $uri): self
     {
-        if (!$uri instanceof UriInterface) {
-            $uri = Uri::new($uri);
+        $uri = self::filterUri($uri);
+        if ($uri instanceof Rfc3986Uri) {
+            return self::new($uri->getRawPath());
         }
+
+        if ($uri instanceof WhatwgUrl) {
+            return self::new($uri->getPath());
+        }
+
         $path = $uri->getPath();
         $authority = $uri->getAuthority();
 
@@ -76,14 +93,35 @@ final class Path extends Component implements PathInterface
         };
     }
 
-    public function value(): ?string
+    public function value(): string
     {
         return Encoder::encodePath($this->path);
+    }
+
+    public function equals(mixed $value): bool
+    {
+        if (!$value instanceof Stringable && !is_string($value)) {
+            return false;
+        }
+
+        if (!$value instanceof UriComponentInterface) {
+            $value = self::tryNew($value);
+            if (null === $value) {
+                return false;
+            }
+        }
+
+        return $value->getUriComponent() === $this->getUriComponent();
     }
 
     public function decoded(): string
     {
         return $this->path;
+    }
+
+    public function normalize(): self
+    {
+        return new self((string) Encoder::normalizePath($this->withoutDotSegments()));
     }
 
     public function isAbsolute(): bool
@@ -99,39 +137,12 @@ final class Path extends Component implements PathInterface
     public function withoutDotSegments(): PathInterface
     {
         $current = $this->toString();
-        if (!str_contains($current, '.')) {
+        $new = UriString::removeDotSegments($current);
+        if ($current === $new) {
             return $this;
         }
 
-        $input = explode(self::SEPARATOR, $current);
-        $new = implode(self::SEPARATOR, array_reduce($input, $this->filterDotSegments(...), []));
-        if (isset(self::DOT_SEGMENTS[end($input)])) {
-            $new .= self::SEPARATOR ;
-        }
-
         return new self($new);
-    }
-
-    /**
-     * Filter Dot segment according to RFC3986.
-     *
-     * @see http://tools.ietf.org/html/rfc3986#section-5.2.4
-     *
-     * @return string[]
-     */
-    private function filterDotSegments(array $carry, string $segment): array
-    {
-        if ('..' === $segment) {
-            array_pop($carry);
-
-            return $carry;
-        }
-
-        if (!isset(self::DOT_SEGMENTS[$segment])) {
-            $carry[] = $segment;
-        }
-
-        return $carry;
     }
 
     /**

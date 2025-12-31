@@ -206,6 +206,18 @@
                     &.fi-hidden {
                         @apply hidden;
                     }
+
+                    &.fi-vertical-align-start {
+                        @apply align-top;
+                    }
+
+                    &.fi-vertical-align-center {
+                        @apply align-middle;
+                    }
+
+                    &.fi-vertical-align-end {
+                        @apply align-bottom;
+                    }
                 }
             }
         }
@@ -288,6 +300,10 @@
             & .fi-in-entry-content {
                 @apply @xl:px-3;
             }
+
+            & .fi-fo-radio {
+                @apply @xl:px-3;
+            }
         }
     }
 
@@ -356,6 +372,10 @@
             }
 
             & .fi-in-entry-content {
+                @apply lg:px-3;
+            }
+
+            & .fi-fo-radio {
                 @apply lg:px-3;
             }
         }

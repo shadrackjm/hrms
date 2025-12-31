@@ -16,18 +16,25 @@ namespace League\Uri\Components;
 use Deprecated;
 use League\Uri\Contracts\AuthorityInterface;
 use League\Uri\Contracts\PortInterface;
+use League\Uri\Contracts\UriComponentInterface;
+use League\Uri\Contracts\UriException;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Exceptions\SyntaxError;
+use League\Uri\UriScheme;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
 
 use function filter_var;
+use function is_string;
 
 use const FILTER_VALIDATE_INT;
 
 final class Port extends Component implements PortInterface
 {
     private readonly ?int $port;
+    private ?array $cachedDefaultSchemes = null;
 
     /**
      * New instance.
@@ -43,9 +50,21 @@ final class Port extends Component implements PortInterface
     }
 
     /**
+     * Create a new instance from a string.or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string|null $uri = null): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (UriException) {
+            return null;
+        }
+    }
+
+    /**
      * Create a new instance from a URI object.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(WhatWgUrl|Rfc3986Uri|Stringable|string $uri): self
     {
         return new self(self::filterUri($uri)->getPort());
     }
@@ -89,6 +108,22 @@ final class Port extends Component implements PortInterface
         };
     }
 
+    public function equals(mixed $value): bool
+    {
+        if (!$value instanceof Stringable && !is_string($value) && null !== $value) {
+            return false;
+        }
+
+        if (!$value instanceof UriComponentInterface) {
+            $value = self::tryNew($value);
+            if (null === $value) {
+                return false;
+            }
+        }
+
+        return $value->getUriComponent() === $this->getUriComponent();
+    }
+
     public function getUriComponent(): string
     {
         return match (null) {
@@ -100,6 +135,22 @@ final class Port extends Component implements PortInterface
     public function toInt(): ?int
     {
         return $this->port;
+    }
+
+    public function defaultScheme(): ?Scheme
+    {
+        return $this->defaultSchemes()[0] ?? null;
+    }
+
+    /**
+     * @return list<Scheme>
+     */
+    public function defaultSchemes(): array
+    {
+        return $this->cachedDefaultSchemes ??= array_map(
+            fn (UriScheme $schemePort): Scheme => Scheme::new($schemePort->value),
+            UriScheme::fromPort($this->port)
+        );
     }
 
     /**

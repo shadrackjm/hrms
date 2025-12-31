@@ -19,6 +19,21 @@ class PerformanceReviewResource extends Resource
     protected static ?string $model = PerformanceReview::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Star;
+ 
+    public static function getNavigationLabel(): string
+    {
+        return __('Performance Reviews');
+    }
+ 
+    public static function getPluralModelLabel(): string
+    {
+        return __('Performance Reviews');
+    }
+ 
+    public static function getModelLabel(): string
+    {
+        return __('Performance Review');
+    }
 
     public static function form(Schema $schema): Schema
     {

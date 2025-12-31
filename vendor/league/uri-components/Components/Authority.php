@@ -17,14 +17,19 @@ use Deprecated;
 use League\Uri\Contracts\AuthorityInterface;
 use League\Uri\Contracts\HostInterface;
 use League\Uri\Contracts\PortInterface;
+use League\Uri\Contracts\UriComponentInterface;
+use League\Uri\Contracts\UriException;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Contracts\UserInfoInterface;
 use League\Uri\Exceptions\SyntaxError;
-use League\Uri\Uri;
 use League\Uri\UriString;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use SensitiveParameter;
 use Stringable;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
+
+use function is_string;
 
 final class Authority extends Component implements AuthorityInterface
 {
@@ -63,16 +68,47 @@ final class Authority extends Component implements AuthorityInterface
     }
 
     /**
+     * Create a new instance from a string.or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string|null $uri = null): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (UriException) {
+            return null;
+        }
+    }
+
+    /**
      * Create a new instance from a URI object.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(WhatwgUrl|Rfc3986Uri|Stringable|string $uri): self
     {
         $uri = self::filterUri($uri);
+        if ($uri instanceof Rfc3986Uri) {
+            return new self($uri->getHost(), $uri->getPort(), $uri->getUserInfo());
+        }
 
-        return match (true) {
-            $uri instanceof UriInterface => self::new($uri->getAuthority()),
-            default => self::new(Uri::new($uri)->getAuthority()),
-        };
+        if ($uri instanceof WhatWgUrl) {
+            $userInfo = $uri->getUsername();
+            if (null !== ($password = $uri->getPassword())) {
+                $userInfo .= ':'.$password;
+            }
+
+            return new self($uri->getUnicodeHost(), $uri->getPort(), $userInfo);
+        }
+
+        if ($uri instanceof Psr7UriInterface) {
+            $components = UriString::parse($uri);
+            $userInfo = $components['user'];
+            if (null !== ($password = $components['pass'])) {
+                $userInfo .= ':'.$password;
+            }
+
+            return new self($components['host'], $components['port'], $userInfo);
+        }
+
+        return self::new($uri->getAuthority());
     }
 
     /**
@@ -144,6 +180,22 @@ final class Authority extends Component implements AuthorityInterface
     public function getUserInfo(): ?string
     {
         return $this->userInfo->value();
+    }
+
+    public function equals(mixed $value): bool
+    {
+        if (!$value instanceof Stringable && !is_string($value) && null !== $value) {
+            return false;
+        }
+
+        if (!$value instanceof UriComponentInterface) {
+            $value = self::tryNew($value);
+            if (null === $value) {
+                return false;
+            }
+        }
+
+        return $value->getUriComponent() === $this->getUriComponent();
     }
 
     /**

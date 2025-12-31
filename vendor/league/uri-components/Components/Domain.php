@@ -19,12 +19,15 @@ use League\Uri\Contracts\AuthorityInterface;
 use League\Uri\Contracts\DomainHostInterface;
 use League\Uri\Contracts\HostInterface;
 use League\Uri\Contracts\UriComponentInterface;
+use League\Uri\Contracts\UriException;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Exceptions\OffsetOutOfBounds;
 use League\Uri\Exceptions\SyntaxError;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
 use TypeError;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
 
 use function array_count_values;
 use function array_filter;
@@ -69,6 +72,18 @@ final class Domain extends Component implements DomainHostInterface
     }
 
     /**
+     * Create a new instance from a string.or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string|null $uri = null): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (UriException) {
+            return null;
+        }
+    }
+
+    /**
      * Returns a new instance from an iterable structure.
      */
     public static function fromLabels(Stringable|string ...$labels): self
@@ -85,7 +100,7 @@ final class Domain extends Component implements DomainHostInterface
     /**
      * Create a new instance from a URI object.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(WhatWgUrl|Rfc3986Uri|Stringable|string $uri): self
     {
         return self::new(Host::fromUri($uri));
     }
@@ -103,6 +118,11 @@ final class Domain extends Component implements DomainHostInterface
         return $this->host->value();
     }
 
+    public function equals(mixed $value): bool
+    {
+        return $this->host->equals($value);
+    }
+
     public function toAscii(): ?string
     {
         return $this->host->toAscii();
@@ -111,6 +131,11 @@ final class Domain extends Component implements DomainHostInterface
     public function toUnicode(): ?string
     {
         return $this->host->toUnicode();
+    }
+
+    public function encoded(): ?string
+    {
+        return $this->host->encoded();
     }
 
     public function isIp(): bool
@@ -146,6 +171,38 @@ final class Domain extends Component implements DomainHostInterface
     public function getIterator(): Iterator
     {
         yield from $this->labels;
+    }
+
+    public function first(): ?string
+    {
+        return $this->get(0);
+    }
+
+    public function last(): ?string
+    {
+        return $this->get(-1);
+    }
+
+    public function indexOf(string $label): ?int
+    {
+        return $this->keys($label)[0] ?? null;
+    }
+
+    public function lastIndexOf(string $label): ?int
+    {
+        $res = $this->keys($label);
+
+        return $res[count($res) - 1] ?? null;
+    }
+
+    public function contains(string $label): bool
+    {
+        return [] !== $this->keys($label);
+    }
+
+    public function isEmpty(): bool
+    {
+        return null === $this->host->value();
     }
 
     public function get(int $offset): ?string

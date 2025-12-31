@@ -14,26 +14,26 @@ class StatsOverview extends StatsOverviewWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Active Employees', User::where('status', 'active')->count())
-            ->description('Currently active')
+            Stat::make(__('Active Employees'), User::where('status', 'active')->count())
+            ->description(__('Currently active'))
             ->descriptionIcon('heroicon-o-users')
             ->color('success'),
-            Stat::make('Pending Leaves', LeaveRequest::where('status', 'pending')->count())
-                ->description('Requires action')
+            Stat::make(__('Pending Leaves'), LeaveRequest::where('status', 'pending')->count())
+                ->description(__('Requires action'))
                 ->descriptionIcon('heroicon-o-calendar-days')
                 ->color('warning'),
-            Stat::make('Today\'s Attendance', 
+            Stat::make(__('Today\'s Attendance'), 
                 Attendance::whereDate('date', today())->where('status', 'present')->count())
-                ->description('Present today')
+                ->description(__('Present today'))
                 ->descriptionIcon('heroicon-o-clock')
                 ->color('primary'),
-                Stat::make('This Month Payroll', 
+                Stat::make(__('This Month Payroll'), 
                 Payroll::where('month', date('F'))
                     ->where('year', date('Y'))
                     ->where('status', 'paid')
                     ->count()
             )
-            ->description('Processed this month')
+            ->description(__('Processed this month'))
             ->descriptionIcon('heroicon-o-banknotes')
             ->color('info'),
         ];

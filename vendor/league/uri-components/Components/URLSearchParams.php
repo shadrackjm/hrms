@@ -21,12 +21,17 @@ use Iterator;
 use IteratorAggregate;
 use League\Uri\Contracts\QueryInterface;
 use League\Uri\Contracts\UriComponentInterface;
+use League\Uri\Contracts\UriException;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Exceptions\SyntaxError;
 use League\Uri\KeyValuePair\Converter;
 use League\Uri\QueryString;
 use League\Uri\Uri;
+use League\Uri\UriString;
+use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
 
 use function array_is_list;
 use function array_key_exists;
@@ -37,6 +42,7 @@ use function func_get_arg;
 use function func_num_args;
 use function get_object_vars;
 use function is_array;
+use function is_bool;
 use function is_iterable;
 use function is_object;
 use function is_scalar;
@@ -168,9 +174,21 @@ final class URLSearchParams implements Countable, IteratorAggregate, UriComponen
      * The input will be parsed from application/x-www-form-urlencoded format.
      * The leading '?' character if present is ignored.
      */
-    public static function new(Stringable|string|null $query): self
+    public static function new(Stringable|string|null $query = null): self
     {
         return new self(Query::fromFormData(self::formatQuery($query)));
+    }
+
+    /**
+     * Create a new instance from a string.or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string|null $uri = null): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (UriException) {
+            return null;
+        }
     }
 
     /**
@@ -199,10 +217,12 @@ final class URLSearchParams implements Countable, IteratorAggregate, UriComponen
     /**
      * Returns a new instance from a URI.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(WhatWgUrl|Rfc3986Uri|Stringable|string $uri): self
     {
         $query = match (true) {
-            $uri instanceof UriInterface => $uri->getQuery(),
+            $uri instanceof Rfc3986Uri => $uri->getRawQuery(),
+            $uri instanceof WhatWgUrl, $uri instanceof UriInterface => $uri->getQuery(),
+            $uri instanceof Psr7UriInterface => UriString::parse($uri)['query'],
             default => Uri::new($uri)->getQuery(),
         };
 
@@ -259,12 +279,22 @@ final class URLSearchParams implements Countable, IteratorAggregate, UriComponen
         return $this->pairs->toFormData();
     }
 
+    public function equals(mixed $value): bool
+    {
+        return $this->pairs->equals($value);
+    }
+
     /**
      * Returns a query string suitable for use in a URL.
      */
     public function toString(): string
     {
         return $this->value() ?? '';
+    }
+
+    public function decoded(): string
+    {
+        return (string) Query::fromPairs($this->pairs)->decoded();
     }
 
     public function __toString(): string
@@ -335,6 +365,21 @@ final class URLSearchParams implements Countable, IteratorAggregate, UriComponen
     }
 
     /**
+     * Tells whether the specified pair is in the search parameters.
+     *
+     * The method requires at least one parameter as the pair name (string or null)
+     * and an optional second and last parameter as the pair value (Stringable|string|float|int|bool|null)
+     * <code>
+     * $params = new URLSearchParams('a=b&c);
+     * $params->has('a', 'b'); // return true
+     * </code>
+     */
+    public function hasValue(?string $name, Stringable|string|float|int|bool|null $value): bool
+    {
+        return $this->has($name, $value);
+    }
+
+    /**
      * Returns the first value associated to the given search parameter or null if none exists.
      */
     public function get(?string $name): ?string
@@ -343,6 +388,22 @@ final class URLSearchParams implements Countable, IteratorAggregate, UriComponen
             $this->has($name) => $this->pairs->get(self::uvString($name)) ?? '',
             default => null,
         };
+    }
+
+    public function first(?string $name): ?string
+    {
+        return $this->get($name);
+    }
+
+    public function last(?string $name): ?string
+    {
+        if (!$this->has($name)) {
+            return null;
+        }
+
+        $res = $this->pairs->getAll(self::uvString($name));
+
+        return $res[count($res) - 1] ?? null;
     }
 
     /**
@@ -462,8 +523,8 @@ final class URLSearchParams implements Countable, IteratorAggregate, UriComponen
     /**
      * Deletes specified parameters and their associated value(s) from the list of all search parameters.
      *
-     *  The method requires at least one parameter as the pair name (string or null)
-     *  and an optional second and last parameter as the pair value (Stringable|string|float|int|bool|null)
+     * The method requires at least one parameter as the pair name (string or null)
+     * and an optional second and last parameter as the pair value (Stringable|string|float|int|bool|null)
      * <code>
      * $params = new URLSearchParams('a=b&c);
      * $params->delete('c'); //delete all parameters with the key 'c'
@@ -482,15 +543,40 @@ final class URLSearchParams implements Countable, IteratorAggregate, UriComponen
     }
 
     /**
+     * Deletes all pair with the specified name and associated value from the list of all search parameters.
+     *
+     * <code>
+     * $params->deleteValue('a', 'b') //delete all pairs with the key 'a' and the value 'b'
+     * </code>
+     */
+    public function deleteValue(?string $name, Stringable|string|float|int|bool|null $value): void
+    {
+        $this->delete($name, $value);
+    }
+
+    /**
      * Sorts all key/value pairs contained in this object in place and returns undefined.
      *
-     * The sort order is according to unicode code points of the keys. This method
+     * The sort order is according to Unicode code points of the keys. This method
      * uses a stable sorting algorithm (i.e. the relative order between
      * key/value pairs with equal keys will be preserved).
      */
     public function sort(): void
     {
         $this->updateQuery($this->pairs->sort());
+    }
+
+    public function when(callable|bool $condition, callable $onSuccess, ?callable $onFail = null): static
+    {
+        if (!is_bool($condition)) {
+            $condition = $condition($this);
+        }
+
+        return match (true) {
+            $condition => $onSuccess($this) ?? $this,
+            null !== $onFail => $onFail($this) ?? $this,
+            default => $this,
+        };
     }
 
     /**

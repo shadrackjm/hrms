@@ -289,21 +289,6 @@ Repeater::make('qualifications')
     ])
 ```
 
-<Aside variant="warning">
-    When using `disabled()` with `relationship()`, ensure that `disabled()` is called before `relationship()`. This ensures that the `dehydrated()` call from within `relationship()` is not overridden by the call from `disabled()`:
-    
-    ```php
-    use Filament\Forms\Components\Repeater;
-    
-    Repeater::make('qualifications')
-        ->disabled()
-        ->relationship()
-        ->schema([
-            // ...
-        ])
-    ```
-</Aside>
-
 ### Reordering items in a relationship
 
 By default, [reordering](#reordering-items) relationship repeater items is disabled. This is because your related model needs a `sort` column to store the order of related records. To enable reordering, you may use the `orderColumn()` method, passing in a name of the column on your related model to store the order in:
@@ -826,7 +811,7 @@ Repeater::make('members')
 This method will automatically enable the `distinct()` and `live()` methods on the field.
 
 <Aside variant="warning">
-    In case you want to add another condition to [disable options](../select#disabling-specific-options) with, you can chain `disableOptionWhen()` with the `merge: true` argument:
+    In case you want to add another condition to [disable options](select#disabling-specific-options) with, you can chain `disableOptionWhen()` with the `merge: true` argument:
     
     ```php
     use Filament\Forms\Components\Repeater;

@@ -16,28 +16,32 @@ class PerformanceReviewForm
     {
         return $schema
             ->components([
-                Section::make('Review Informations')
+                Section::make(__('Review Informations'))
                 ->columns(2)
                 ->schema([
                     Select::make('user_id')
+                    ->label(__('Name'))
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
                     Select::make('reviewer_id')
+                        ->label(__('Reviewer'))
                         ->relationship('reviewer', 'name')
                         ->searchable()
                         ->preload()
                         ->required(),
                     TextInput::make('review_period')
+                        ->label(__('Review Period'))
                         ->default(now()->format('Y-m-d'))
-                        ->placeholder('Select Review Period')
+                        ->placeholder(__('Select Review Period'))
                         ->required(),
                 ]),
-                Section::make('Perfomance Metrics (1-10)')
+                Section::make(__('Perfomance Metrics (1-10)'))
                 ->columns(2)
                 ->schema([
                     TextInput::make('quality_of_work')
+                    ->label(__('Quality of Work'))
                     ->required()
                     ->minValue(1)
                     ->maxValue(10)
@@ -46,6 +50,7 @@ class PerformanceReviewForm
                         self::calculateOverallRating($set,$get))
                     ->numeric(),
                     TextInput::make('productivity')
+                        ->label(__('Productivity'))
                         ->required()
                         ->minValue(1)
                         ->maxValue(10)
@@ -54,6 +59,7 @@ class PerformanceReviewForm
                             self::calculateOverallRating($set,$get))
                         ->numeric(),
                     TextInput::make('communication')
+                        ->label(__('Communication'))
                         ->required()
                         ->minValue(1)
                         ->maxValue(10)
@@ -62,6 +68,7 @@ class PerformanceReviewForm
                             self::calculateOverallRating($set,$get))
                         ->numeric(),
                     TextInput::make('teamwork')
+                        ->label(__('Teamwork'))
                         ->required()
                         ->minValue(1)
                         ->maxValue(10)
@@ -70,6 +77,7 @@ class PerformanceReviewForm
                             self::calculateOverallRating($set,$get))
                         ->numeric(),
                     TextInput::make('leadership')
+                        ->label(__('Leadership'))
                         ->required()
                         ->minValue(1)
                         ->maxValue(10)
@@ -78,6 +86,7 @@ class PerformanceReviewForm
                             self::calculateOverallRating($set,$get))
                         ->numeric(),
                     TextInput::make('overall_rating')
+                        ->label(__('Overall Rating'))
                         ->required()
                         ->suffix(' / 10')
                         ->disabled()
@@ -85,21 +94,25 @@ class PerformanceReviewForm
                         ->numeric(),
                 ]),
                
-                Section::make('Feedback and Goals')
+                Section::make(__('Feedback and Goals'))
                 ->columns(2)
                 ->columnSpanFull()
-
+ 
                 ->schema([
                     Textarea::make('strengths')
+                    ->label(__('Strengths'))
                     ->default(null)
                     ->columnSpanFull(),
                     Textarea::make('areas_for_improvement')
+                        ->label(__('Areas for Improvement'))
                         ->default(null)
                         ->columnSpanFull(),
                     Textarea::make('goals')
+                        ->label(__('Goals'))
                         ->default(null)
                         ->columnSpanFull(),
                     Textarea::make('comments')
+                        ->label(__('Comments'))
                         ->default(null)
                         ->columnSpanFull(),
                 ])

@@ -4,7 +4,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Pages\Dashboard;
+use App\Filament\Pages\Dashboard;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -30,11 +30,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandLogo(asset('images/logo.svg'))
-            ->favicon(asset('images/logo.svg'))
+            ->brandLogo(asset('images/HRIS-PRO.svg'))
+            ->brandLogoHeight('3rem')
+            ->favicon(asset('images/HRIS-PRO.svg'))
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => Color::Slate,
             ])
+            ->font('Inter')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

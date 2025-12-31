@@ -17,20 +17,24 @@ class PositionsTable
         return $table
             ->columns([
                 TextColumn::make('title')
+                    ->label(__('Title'))
                     ->searchable(),
                 TextColumn::make('department.name')
+                    ->label(__('Department'))
                     ->searchable(),
                 TextColumn::make('min_salary')
+                    ->label(__('Min Salary'))
                     ->numeric()
-                    ->money('USD')
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ",", "."))
                     ->sortable(),
                 TextColumn::make('max_salary')
+                    ->label(__('Max Salary'))
                     ->numeric()
-                    ->money('USD')
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ",", "."))
                     ->sortable(),
                 TextColumn::make('employees_count')
                     ->counts('employees')
-                    ->Label('Employees'),
+                    ->label(__('Employees')),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -15,17 +15,22 @@ class AttendancesTable
         return $table
             ->columns([
                 TextColumn::make('user.name')
+                    ->label(__('Name'))
                     ->searchable(),
                 TextColumn::make('date')
+                    ->label(__('Date'))
                     ->date()
                     ->sortable(),
                 TextColumn::make('check_in')
+                    ->label(__('Check In'))
                     ->time()
                     ->sortable(),
                 TextColumn::make('check_out')
+                    ->label(__('Check Out'))
                     ->time()
                     ->sortable(),
                 TextColumn::make('status')
+                    ->label(__('Status'))
                     ->badge(),
                 TextColumn::make('created_at')
                     ->dateTime()

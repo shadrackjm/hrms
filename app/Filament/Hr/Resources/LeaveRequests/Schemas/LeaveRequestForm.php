@@ -19,40 +19,53 @@ class LeaveRequestForm
         return $schema
             ->components([
                 Select::make('user_id')
+                    ->label(__('Name'))
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
                 Select::make('leave_type_id')
+                    ->label(__('Leave Type'))
                     ->relationship('leaveType', 'name')
                     ->preload()
                     ->searchable()
                     ->required(),
                 DatePicker::make('start_date')
+                    ->label(__('Start Date'))
                     ->live()
                     ->required()
                     ->afterStateUpdated(fn($state, Set $set, Get $get)=> 
                         self::calculateDays($set,$get)),
                 DatePicker::make('end_date')
+                    ->label(__('End Date'))
                     ->live()
                     ->afterStateUpdated(fn($state, Set $set, Get $get)=> 
                         self::calculateDays($set,$get))
                     ->required(),
                 TextInput::make('days')
+                    ->label(__('Days'))
                     ->required()
                     ->disabled()
                     ->dehydrated()
                     ->numeric(),
                 Textarea::make('reason')
+                    ->label(__('Reason'))
                     ->required()
                     ->columnSpanFull(),
                 Select::make('status')
-                    ->options(['pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected'])
+                    ->label(__('Status'))
+                    ->options([
+                        'pending' => __('Pending'), 
+                        'approved' => __('Approved'), 
+                        'rejected' => __('Rejected')
+                    ])
                     ->default('pending')
                     ->live()
                     ->required(),
-                DateTimePicker::make('approved_at'),
+                DateTimePicker::make('approved_at')
+                    ->label(__('Approved At')),
                 Textarea::make('rejection_reason')
+                    ->label(__('Rejection Reason'))
                     ->default(null)
                     ->columnSpanFull()
                     ->visible(fn(Get $get) => $get('status') === 'rejected'),

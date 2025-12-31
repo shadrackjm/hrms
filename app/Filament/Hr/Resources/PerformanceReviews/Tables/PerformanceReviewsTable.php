@@ -16,16 +16,20 @@ class PerformanceReviewsTable
         return $table
             ->columns([
                 TextColumn::make('user.name')
+                    ->label(__('Name'))
                     ->searchable(),
                     TextColumn::make('user.employee_id')
-                    ->label('Employee ID')
+                    ->label(__('Employee Code'))
                     ->searchable(),
                 TextColumn::make('reviewer.name')
+                    ->label(__('Reviewer'))
                     ->searchable(),
                 TextColumn::make('review_period')
+                    ->label(__('Review Period'))
                     ->searchable(),
                 
                 TextColumn::make('overall_rating')
+                    ->label(__('Overall Rating'))
                     ->numeric()
                     ->badge()
                     ->suffix(' / 10')

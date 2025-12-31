@@ -4,7 +4,7 @@ namespace App\Providers\Filament;
 
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Pages\Dashboard;
+use App\Filament\Employee\Pages\Dashboard;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -29,9 +29,13 @@ class EmployeePanelProvider extends PanelProvider
             ->path('employee')
             ->passwordReset()
             ->login()
+            ->brandLogo(asset('images/HRIS-PRO.svg'))
+            ->brandLogoHeight('3rem')
+            ->favicon(asset('images/HRIS-PRO.svg'))
             ->colors([
-                'primary' => Color::Green,
+                'primary' => Color::Slate,
             ])
+            ->font('Inter')
             ->discoverResources(in: app_path('Filament/Employee/Resources'), for: 'App\Filament\Employee\Resources')
             ->discoverPages(in: app_path('Filament/Employee/Pages'), for: 'App\Filament\Employee\Pages')
             ->pages([

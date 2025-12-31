@@ -2,6 +2,7 @@
     use Filament\Actions\Action;
     use Filament\Actions\ActionGroup;
     use Filament\Support\Enums\Alignment;
+    use Filament\Support\Enums\VerticalAlignment;
     use Illuminate\Support\Js;
     use Illuminate\View\ComponentAttributeBag;
 
@@ -38,9 +39,9 @@
         {{ $attributes
                 ->merge($getExtraAttributes(), escape: false)
                 ->class([
-                                'fi-fo-table-repeater',
-                                'fi-compact' => $isCompact,
-                            ]) }}
+                    'fi-fo-table-repeater',
+                    'fi-compact' => $isCompact,
+                ]) }}
     >
         @if (count($items))
             <table>
@@ -86,7 +87,7 @@
                     {{ (new ComponentAttributeBag)
                             ->merge([
                                 'data-sortable-animation-duration' => $getReorderAnimationDuration(),
-                                'x-on:end.stop' => '$event.oldDraggableIndex !== $event.newDraggableIndex && $wire.mountAction(\'reorder\', { items: $event.target.sortable.toArray() }, { schemaComponent: \'' . $key . '\' })',
+                                'x-on:end.stop' => '$wire.mountAction(\'reorder\', { items: $event.target.sortable.toArray() }, { schemaComponent: \'' . $key . '\' })',
                             ], escape: false) }}
                 >
                     @foreach ($items as $itemKey => $item)
@@ -160,9 +161,14 @@
                                         @if ($schemaComponent->isVisible())
                                             @php
                                                 $schemaComponentStatePath = $schemaComponent->getStatePath();
+                                                $currentColumn = $tableColumns[$counter - 1] ?? null;
+                                                $columnVerticalAlignment = $currentColumn?->getVerticalAlignment();
                                             @endphp
 
                                             <td
+                                                @class([
+                                                    ($columnVerticalAlignment instanceof VerticalAlignment) ? ('fi-vertical-align-' . $columnVerticalAlignment->value) : (is_string($columnVerticalAlignment) ? $columnVerticalAlignment : ''),
+                                                ])
                                                 x-data="filamentSchemaComponent({
                                                     path: @js($schemaComponentStatePath),
                                                     containerPath: @js($itemStatePath),

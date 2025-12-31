@@ -19,6 +19,21 @@ class AttendanceResource extends Resource
     protected static ?string $model = Attendance::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Clock;
+ 
+    public static function getNavigationLabel(): string
+    {
+        return __('Attendances');
+    }
+ 
+    public static function getPluralModelLabel(): string
+    {
+        return __('Attendances');
+    }
+ 
+    public static function getModelLabel(): string
+    {
+        return __('Attendance');
+    }
 
     public static function form(Schema $schema): Schema
     {

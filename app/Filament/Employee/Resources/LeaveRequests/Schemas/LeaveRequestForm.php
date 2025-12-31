@@ -20,17 +20,20 @@ class LeaveRequestForm
         return $schema
             ->components([
                 Select::make('user_id')
+                    ->label(__('Name'))
                     ->relationship('user', 'name')
                     ->default(auth()->user()->id)
                     ->disabled()
                     ->dehydrated()
                     ->required(),
                 Select::make('leave_type_id')
+                    ->label(__('Leave Type'))
                     ->relationship('leaveType', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
                 DatePicker::make('start_date')
+                    ->label(__('Start Date'))
                     ->minDate(now()->subDay())
                     ->live()
                     ->required()
@@ -38,6 +41,7 @@ class LeaveRequestForm
                         self::calculateDays($get, $set)
                     ),
                 DatePicker::make('end_date')
+                    ->label(__('End Date'))
                     ->minDate(now())
                     ->live()
                     ->required()
@@ -45,11 +49,13 @@ class LeaveRequestForm
                         self::calculateDays($get, $set)
                     ),
                 TextInput::make('days')
+                    ->label(__('Days'))
                     ->required()
                     ->disabled()
                     ->dehydrated()
                     ->numeric(),
                 Textarea::make('reason')
+                    ->label(__('Reason'))
                     ->required()
                     ->columnSpanFull(),
                 // Select::make('status')

@@ -21,7 +21,21 @@ class LeaveRequestResource extends Resource
     protected static ?string $model = LeaveRequest::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::CalendarDays;
-    protected static ?string $navigationLabel = 'My Leave Requests';
+ 
+    public static function getNavigationLabel(): string
+    {
+        return __('My Leave Requests');
+    }
+ 
+    public static function getPluralModelLabel(): string
+    {
+        return __('Leave Requests');
+    }
+ 
+    public static function getModelLabel(): string
+    {
+        return __('Leave Request');
+    }
     public static function form(Schema $schema): Schema
     {
         return LeaveRequestForm::configure($schema);

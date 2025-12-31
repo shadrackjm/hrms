@@ -17,6 +17,7 @@ use Deprecated;
 use Iterator;
 use League\Uri\Contracts\PathInterface;
 use League\Uri\Contracts\SegmentedPathInterface;
+use League\Uri\Contracts\UriException;
 use League\Uri\Contracts\UriInterface;
 use League\Uri\Encoder;
 use League\Uri\Exceptions\OffsetOutOfBounds;
@@ -24,10 +25,14 @@ use League\Uri\Exceptions\SyntaxError;
 use Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
 use TypeError;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
+use Uri\WhatWg\Url as WhatWgUrl;
 
+use ValueError;
 use function array_count_values;
 use function array_filter;
 use function array_keys;
+use function array_map;
 use function array_pop;
 use function array_unshift;
 use function count;
@@ -80,9 +85,21 @@ final class HierarchicalPath extends Component implements SegmentedPathInterface
     }
 
     /**
+     * Create a new instance from a string.or a stringable structure or returns null on failure.
+     */
+    public static function tryNew(Stringable|string $uri = ''): ?self
+    {
+        try {
+            return self::new($uri);
+        } catch (UriException) {
+            return null;
+        }
+    }
+
+    /**
      * Create a new instance from a URI object.
      */
-    public static function fromUri(Stringable|string $uri): self
+    public static function fromUri(WhatWgUrl|Rfc3986Uri|Stringable|string $uri): self
     {
         return new self(Path::fromUri($uri));
     }
@@ -146,9 +163,19 @@ final class HierarchicalPath extends Component implements SegmentedPathInterface
         return $this->path->value();
     }
 
+    public function equals(mixed $value): bool
+    {
+        return $this->path->equals($value);
+    }
+
     public function decoded(): string
     {
         return $this->path->decoded();
+    }
+
+    public function normalize(): self
+    {
+        return new self((string) $this->path->normalize()->value());
     }
 
     public function getDirname(): string
@@ -179,6 +206,38 @@ final class HierarchicalPath extends Component implements SegmentedPathInterface
         [$basename] = explode(';', $this->getBasename(), 2);
 
         return pathinfo($basename, PATHINFO_EXTENSION);
+    }
+
+    public function first(): ?string
+    {
+        return $this->get(0);
+    }
+
+    public function last(): ?string
+    {
+        return $this->get(-1);
+    }
+
+    public function indexOf(string $segment): ?int
+    {
+        return $this->keys($segment)[0] ?? null;
+    }
+
+    public function lastIndexOf(string $segment): ?int
+    {
+        $res = $this->keys($segment);
+
+        return $res[count($res) - 1] ?? null;
+    }
+
+    public function contains(string $segment): bool
+    {
+        return [] !== $this->keys($segment);
+    }
+
+    public function isEmpty(): bool
+    {
+        return '' === $this->path->value();
     }
 
     public function get(int $offset): ?string
@@ -250,28 +309,58 @@ final class HierarchicalPath extends Component implements SegmentedPathInterface
         };
     }
 
-    public function append(Stringable|string $segment): SegmentedPathInterface
+    public function append(Stringable|string $path): SegmentedPathInterface
     {
-        /** @var string $segment */
-        $segment = self::filterComponent($segment);
+        /** @var string $path */
+        $path = self::filterComponent($path);
 
         return new self(
             rtrim($this->path->toString(), self::SEPARATOR)
             .self::SEPARATOR
-            .ltrim($segment, self::SEPARATOR)
+            .ltrim($path, self::SEPARATOR)
         );
     }
 
-    public function prepend(Stringable|string $segment): SegmentedPathInterface
+    /**
+     * @param iterable<Stringable|string> $segments
+     *
+     * @return SegmentedPathInterface
+     */
+    public function appendSegments(iterable $segments): SegmentedPathInterface
     {
-        /** @var string $segment */
-        $segment = self::filterComponent($segment);
+        $newSegments = [];
+        foreach ($segments as $segment) {
+            $newSegments[] = str_replace('/', '%2F', self::filterComponent($segment) ?? throw new ValueError('The segment can not be null.'));
+        }
+
+        return $this->append(implode('/', $newSegments));
+    }
+
+    public function prepend(Stringable|string $path): SegmentedPathInterface
+    {
+        /** @var string $path */
+        $path = self::filterComponent($path);
 
         return new self(
-            rtrim($segment, self::SEPARATOR)
+            rtrim($path, self::SEPARATOR)
             .self::SEPARATOR
             .ltrim($this->path->toString(), self::SEPARATOR)
         );
+    }
+
+    /**
+     * @param iterable<Stringable|string> $segments
+     *
+     * @return SegmentedPathInterface
+     */
+    public function prependSegments(iterable $segments): SegmentedPathInterface
+    {
+        $newSegments = [];
+        foreach ($segments as $segment) {
+            $newSegments[] = str_replace('/', '%2F', self::filterComponent($segment) ?? throw new ValueError('The segment can not be null.'));
+        }
+
+        return $this->prepend(implode('/', $newSegments));
     }
 
     public function withSegment(int $key, Stringable|string $segment): SegmentedPathInterface

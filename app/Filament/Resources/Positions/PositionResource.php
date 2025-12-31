@@ -20,6 +20,26 @@ class PositionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Briefcase;
     protected static string | UnitEnum | null $navigationGroup = 'Organization';
+ 
+    public static function getNavigationLabel(): string
+    {
+        return __('Positions');
+    }
+ 
+    public static function getPluralModelLabel(): string
+    {
+        return __('Positions');
+    }
+ 
+    public static function getModelLabel(): string
+    {
+        return __('Position');
+    }
+ 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Organization');
+    }
 
     protected static ?string $recordTitleAttribute = 'title';
 

@@ -471,7 +471,10 @@ abstract class Factory
         $query = $model->newQueryWithoutScopes();
 
         $query->fillAndInsert(
-            $madeCollection->map(fn (Model $model) => $model->getAttributes())->all()
+            $madeCollection->withoutAppends()
+                ->setHidden([])
+                ->map(static fn (Model $model) => $model->attributesToArray())
+                ->all()
         );
     }
 
@@ -839,10 +842,10 @@ abstract class Factory
     /**
      * Specify the database connection that should be used to generate models.
      *
-     * @param  \UnitEnum|string  $connection
+     * @param  \UnitEnum|string|null  $connection
      * @return static
      */
-    public function connection(UnitEnum|string $connection)
+    public function connection(UnitEnum|string|null $connection)
     {
         return $this->newInstance(['connection' => $connection]);
     }

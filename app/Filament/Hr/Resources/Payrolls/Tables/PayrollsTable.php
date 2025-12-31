@@ -20,7 +20,7 @@ class PayrollsTable
         return $table
         ->headerActions([
             Action::make("generate_payroll")
-            ->label("Generate Payroll")
+            ->label(__('Generate Payroll'))
             ->icon("heroicon-o-cog")
             ->color("success")
             ->schema([
@@ -48,8 +48,8 @@ class PayrollsTable
                         ->minValue(2020)
                         ->maxValue(now()->year + 1),
                 Select::make('user_id')
-                        ->label('Employee (Optional)')
-                        ->placeholder('Generate for all employees')
+                        ->label(__('Employee (Optional)'))
+                        ->placeholder(__('Generate for all employees'))
                         ->relationship('user', 'name')
                         ->searchable()
                         ->preload(),
@@ -66,22 +66,28 @@ class PayrollsTable
         ])
             ->columns([
                 TextColumn::make('user.name')
+                    ->label(__('Name'))
                     ->searchable(),
                     TextColumn::make('user.employee_id')
-                    ->label('Employee Code')
+                    ->label(__('Employee Code'))
                     ->searchable(),
                 TextColumn::make('month')
+                    ->label(__('Month'))
                     ->searchable(),
                 TextColumn::make('year')
+                    ->label(__('Year'))
                     ->sortable(),
                 TextColumn::make('basic_salary')
-                    ->money('USD')
+                    ->label(__('Basic Salary'))
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ",", "."))
                     ->sortable(),
                 
                 TextColumn::make('net_salary')
-                ->money('USD')
+                    ->label(__('Net Salary'))
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ",", "."))
                     ->sortable(),
                 TextColumn::make('status')
+                    ->label(__('Status'))
                     ->badge(),
                 TextColumn::make('created_at')
                     ->dateTime()
