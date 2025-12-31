@@ -4,19 +4,20 @@ namespace App\Filament\Employee\Pages;
 
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
-use UnitEnum;
-use BackedEnum;
 use Filament\Pages\Page;
 use App\Models\Attendance;
-use Filament\Support\Icons\Heroicon;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use UnitEnum;
+use BackedEnum;
 
 class CheckInOut extends Page
 {
     use HasPageShield;
     protected string $view = 'filament.employee.pages.check-in-out';
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::ArrowPath;
-    protected static string | UnitEnum | null $navigationGroup = 'Attendances';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clock';
+    protected static ?string $navigationLabel = 'Check In/Out';
+    protected static string | UnitEnum | null $navigationGroup = 'Attendance';
+    protected static ?int $navigationSort = 1;
 
     public $todayAttendance;
     public $canCheckIn = false;
@@ -54,16 +55,16 @@ class CheckInOut extends Page
     
             Notification::make()
             ->success()
-            ->title('Checked In Successfully')
-            ->body('Your check-in time: '. now()->format('h:i A'))
+            ->title(__('Checked In Successfully'))
+            ->body(__('Your check-in time: '). now()->format('h:i A'))
             ->send();
     
             $this->loadAttendance();
         } catch (\Exception $e) {
             Notification::make()
             ->danger()
-            ->title('Check-in Failed')
-            ->body('You have already checked in today')
+            ->title(__('Check-in Failed'))
+            ->body(__('You have already checked in today'))
             ->send();
         }
     }
@@ -76,8 +77,8 @@ class CheckInOut extends Page
 
             Notification::make()
             ->success()
-            ->title('Checked Out successfully')
-            ->body('your check-out time: '. now()->format('h:i A'))
+            ->title(__('Checked Out successfully'))
+            ->body(__('your check-out time: '). now()->format('h:i A'))
             ->send();
 
             $this->loadAttendance();
@@ -87,25 +88,25 @@ class CheckInOut extends Page
     protected function getHeaderActions(): array {
         return [
             Action::make('checkIn')
-            ->label('Check In')
+            ->label(__('Check In'))
             ->icon('heroicon-o-arrow-right-on-rectangle')
             ->color('success')
             ->visible(fn() => $this->canCheckIn)
             ->requiresConfirmation()
-            ->modalHeading('check in')
-            ->modalDescription('Are you sure you want to check in now?')
-            ->modalSubmitActionLabel('Yes, Check In')
+            ->modalHeading(__('check in'))
+            ->modalDescription(__('Are you sure you want to check in now?'))
+            ->modalSubmitActionLabel(__('Yes, Check In'))
             ->action(fn() => $this->CheckIn()),
 
             Action::make('checkOut')
-            ->label('Check Out')
+            ->label(__('Check Out'))
             ->icon('heroicon-o-arrow-left-on-rectangle')
             ->color('danger')
             ->visible(fn() => $this->canCheckOut)
             ->requiresConfirmation()
-            ->modalHeading('check out')
-            ->modalDescription('Are you sure you want to check out now?')
-            ->modalSubmitActionLabel('Yes, Check Out')
+            ->modalHeading(__('check out'))
+            ->modalDescription(__('Are you sure you want to check out now?'))
+            ->modalSubmitActionLabel(__('Yes, Check Out'))
             ->action(fn() => $this->checkOut())
         ];
     }

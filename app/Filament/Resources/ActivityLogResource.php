@@ -16,23 +16,22 @@ class ActivityLogResource extends Resource
 {
     protected static ?string $model = Activity::class;
     
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-list-bullet';
-
-    protected static string | UnitEnum | null $navigationGroup = 'User Management';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-list-bullet';
+    protected static string | UnitEnum | null $navigationGroup = 'System';
 
     public static function getNavigationLabel(): string
     {
-        return __('Laporan Aktivitas');
+        return __('Activity Log');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('Laporan Aktivitas');
+        return __('Activity Logs');
     }
 
     public static function getModelLabel(): string
     {
-        return __('Laporan Aktivitas');
+        return __('Activity Log');
     }
 
     public static function table(Table $table): Table
@@ -40,23 +39,23 @@ class ActivityLogResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('created_at')
-                    ->label(__('Waktu'))
+                    ->label(__('Time'))
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('causer.name')
-                    ->label(__('Pengguna'))
+                    ->label(__('User'))
                     ->searchable(),
                 TextColumn::make('description')
-                    ->label(__('Aktivitas'))
+                    ->label(__('Activity'))
                     ->formatStateUsing(fn ($state) => __($state))
                     ->searchable(),
                 TextColumn::make('subject_type')
-                    ->label(__('Modul'))
+                    ->label(__('Module'))
                     ->formatStateUsing(fn ($state) => str_replace('App\\Models\\', '', $state)),
                 TextColumn::make('properties.ip')
                     ->label(__('IP Address')),
                 TextColumn::make('event')
-                    ->label(__('Kejadian'))
+                    ->label(__('Event'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'created' => 'success',

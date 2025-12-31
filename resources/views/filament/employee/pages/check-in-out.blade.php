@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <x-filament::section>
         <x-slot name="heading">
-            {{ now()->format('l, F d, Y') }}
+            {{ now()->translatedFormat('l, F d, Y') }}
         </x-slot>
 
         <div class="text-center space-y-6">
@@ -28,10 +28,10 @@
                                         style="width: 1.5rem; height: 1.5rem; margin: 0 auto 0.5rem;"
                                     />
                                     <p style="font-size: 0.875rem; font-weight: 500; color: rgb(107 114 128); margin-bottom: 0.5rem;">
-                                        Check In Time
+                                        {{ __('Check In Time') }}
                                     </p>
                                     <p style="font-size: 1.5rem; font-weight: 700; color: rgb(34 197 94);">
-                                        {{ $todayAttendance->check_in?->format('h:i A') ?? 'Not checked in' }}
+                                        {{ $todayAttendance->check_in?->format('h:i A') ?? __('Not checked in') }}
                                     </p>
                                 </div>
                             </x-filament::card>
@@ -45,10 +45,10 @@
                                         style="width: 1.5rem; height: 1.5rem; margin: 0 auto 0.5rem;"
                                     />
                                     <p style="font-size: 0.875rem; font-weight: 500; color: rgb(107 114 128); margin-bottom: 0.5rem;">
-                                        Check Out Time
+                                        {{ __('Check Out Time') }}
                                     </p>
                                     <p style="font-size: 1.5rem; font-weight: 700; color: rgb(239 68 68);">
-                                        {{ $todayAttendance->check_out?->format('h:i A') ?? 'Not checked out' }}
+                                        {{ $todayAttendance->check_out?->format('h:i A') ?? __('Not checked out') }}
                                     </p>
                                 </div>
                             </x-filament::card>
@@ -63,7 +63,7 @@
                     <x-filament::card>
                         <div style="text-align: center;">
                             <p style="font-size: 0.875rem; font-weight: 500; color: rgb(107 114 128); margin-bottom: 0.5rem;">
-                                Total Working Hours
+                                {{ __('Total Working Hours') }}
                             </p>
                             <p style="font-size: 1.875rem; font-weight: 700; color: rgb(59 130 246);">
                                 {{ $todayAttendance->check_in->diff($todayAttendance->check_out)->format('%H:%I:%S') }}
@@ -80,10 +80,10 @@
                             style="width: 4rem; height: 4rem; margin: 0 auto 1rem; color: rgb(156 163 175);"
                         />
                         <p style="font-size: 1.125rem; font-weight: 500; color: rgb(107 114 128);">
-                            You haven't checked in today
+                            {{ __('You haven\'t checked in today') }}
                         </p>
                         <p style="font-size: 0.875rem; color: rgb(156 163 175); margin-top: 0.5rem;">
-                            Click the "Check In" button above to mark your attendance
+                            {{ __('Click the "Check In" button above to mark your attendance') }}
                         </p>
                     </div>
                 </x-filament::card>
@@ -92,16 +92,17 @@
             {{-- Attendance Stats --}}
             <x-filament::section>
                 <x-slot name="heading">
-                    This Month's Summary
+                    {{ __('This Month\'s Summary') }}
                 </x-slot>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <x-filament::card>
                         <div style="text-align: center;">
-                            <p style="font-size: 0.875rem; color: rgb(107 114 128);">Present Days</p>
+                            <p style="font-size: 0.875rem; color: rgb(107 114 128);">{{ __('Present Days') }}</p>
                             <p style="font-size: 1.5rem; font-weight: 700; color: rgb(34 197 94);">
                                 {{ \App\Models\Attendance::where('user_id', auth()->id())
                                     ->whereMonth('date', now()->month)
+                                    ->whereYear('date', now()->year)
                                     ->where('status', 'present')
                                     ->count() }}
                             </p>
@@ -110,10 +111,11 @@
 
                     <x-filament::card>
                         <div style="text-align: center;">
-                            <p style="font-size: 0.875rem; color: rgb(107 114 128);">Late Days</p>
+                            <p style="font-size: 0.875rem; color: rgb(107 114 128);">{{ __('Late Days') }}</p>
                             <p style="font-size: 1.5rem; font-weight: 700; color: rgb(234 179 8);">
                                 {{ \App\Models\Attendance::where('user_id', auth()->id())
                                     ->whereMonth('date', now()->month)
+                                    ->whereYear('date', now()->year)
                                     ->where('status', 'late')
                                     ->count() }}
                             </p>
@@ -122,10 +124,11 @@
 
                     <x-filament::card>
                         <div style="text-align: center;">
-                            <p style="font-size: 0.875rem; color: rgb(107 114 128);">Absent Days</p>
+                            <p style="font-size: 0.875rem; color: rgb(107 114 128);">{{ __('Absent Days') }}</p>
                             <p style="font-size: 1.5rem; font-weight: 700; color: rgb(239 68 68);">
                                 {{ \App\Models\Attendance::where('user_id', auth()->id())
                                     ->whereMonth('date', now()->month)
+                                    ->whereYear('date', now()->year)
                                     ->where('status', 'absent')
                                     ->count() }}
                             </p>

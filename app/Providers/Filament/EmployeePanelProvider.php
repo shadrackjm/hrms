@@ -28,7 +28,7 @@ class EmployeePanelProvider extends PanelProvider
             ->id('employee')
             ->path('employee')
             ->passwordReset()
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandLogo(asset('images/HRIS-PRO.svg'))
             ->brandLogoHeight('3rem')
             ->favicon(asset('images/HRIS-PRO.svg'))
@@ -61,6 +61,10 @@ class EmployeePanelProvider extends PanelProvider
                 Authenticate::class,
             ])->plugins([
                 FilamentShieldPlugin::make()
-            ]);
+            ])
+            ->renderHook(
+                'panels::body.end',
+                fn () => view('firebase-sdk'),
+            );
     }
 }

@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandLogo(asset('images/HRIS-PRO.svg'))
             ->brandLogoHeight('3rem')
             ->favicon(asset('images/HRIS-PRO.svg'))
@@ -62,6 +62,10 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])->plugins([
                 FilamentShieldPlugin::make()
-            ]);
+            ])
+            ->renderHook(
+                'panels::body.end',
+                fn () => view('firebase-sdk'),
+            );
     }
 }

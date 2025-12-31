@@ -20,7 +20,7 @@ class AttendanceResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
-    protected static string| BackedEnum|null $navigationIcon = Heroicon::Clock;
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::Clock;
  
     public static function getNavigationLabel(): string
     {
@@ -37,7 +37,7 @@ class AttendanceResource extends Resource
         return __('Attendance');
     }
  
-    protected static string | UnitEnum | null $navigationGroup = 'Attendances';
+    protected static string | UnitEnum | null $navigationGroup = 'Attendance';
 
     public static function form(Schema $schema): Schema
     {

@@ -27,7 +27,7 @@ class HrPanelProvider extends PanelProvider
         return $panel
             ->id('hr')
             ->path('hr')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->passwordReset()
             ->brandLogo(asset('images/HRIS-PRO.svg'))
             ->brandLogoHeight('3rem')
@@ -61,6 +61,10 @@ class HrPanelProvider extends PanelProvider
                 Authenticate::class,
             ])->plugins([
                 FilamentShieldPlugin::make()
-            ]);
+            ])
+            ->renderHook(
+                'panels::body.end',
+                fn () => view('firebase-sdk'),
+            );
     }
 }
