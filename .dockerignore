@@ -1,0 +1,16 @@
+/vendor
+/node_modules
+/.git
+/storage/*.key
+.env
+/public/storage
+/database/*.sqlite
+/database/*.sqlite-journal
+/database/*.sqlite-shm
+/database/*.sqlite-wal
+Dockerfile
+.dockerignore
+.gitignore
+README.md
+deployment_oracle.md
+deployment_render.md
